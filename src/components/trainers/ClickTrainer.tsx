@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { useClickTrainer } from '../../hooks/useClickTrainer';
+import { useStats } from '../../hooks/useStats';
 import { TrainerStats } from './TrainerStats';
 import { Button } from '../ui/Button';
 import { DEFAULT_SESSION_DURATION, TRAINING_AREA_SIZE } from '../../utils/constants';
 import clsx from 'clsx';
 
-interface ClickTrainerProps {
-  onSessionComplete: (session: any) => void;
-}
-
-export const ClickTrainer: React.FC<ClickTrainerProps> = ({ onSessionComplete }) => {
+export const ClickTrainer: React.FC = () => {
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [duration, setDuration] = useState(DEFAULT_SESSION_DURATION);
+  const { saveClickSession } = useStats();
 
   const {
     isActive,
@@ -31,7 +29,7 @@ export const ClickTrainer: React.FC<ClickTrainerProps> = ({ onSessionComplete })
   } = useClickTrainer({
     duration,
     difficulty,
-    onSessionComplete
+    onSessionComplete: saveClickSession
   });
 
   const difficultyOptions: Array<'easy' | 'medium' | 'hard'> = ['easy', 'medium', 'hard'];
