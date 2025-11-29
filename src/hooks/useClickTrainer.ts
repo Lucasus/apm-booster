@@ -26,8 +26,6 @@ export const useClickTrainer = ({ duration, difficulty, onSessionComplete }: Use
   const config = DIFFICULTY_CONFIG[difficulty];
 
   const spawnTarget = useCallback(() => {
-    if (!isActive || isPaused) return;
-
     const margin = config.targetSize / 2 + 10;
 
     const target: Target = {
@@ -44,17 +42,15 @@ export const useClickTrainer = ({ duration, difficulty, onSessionComplete }: Use
       setCurrentTarget(current => {
         if (current?.id === target.id) {
           setMisses(prev => prev + 1);
-          spawnTarget();
+          setTimeout(() => spawnTarget(), 0);
           return null;
         }
         return current;
       });
     }, config.targetLifetime);
-  }, [config, isActive, isPaused]);
+  }, [config]);
 
   const handleTargetClick = useCallback((targetId: string) => {
-    if (!isActive || isPaused) return;
-
     setCurrentTarget(current => {
       if (current?.id === targetId) {
         setScore(prev => prev + 1);
@@ -68,11 +64,11 @@ export const useClickTrainer = ({ duration, difficulty, onSessionComplete }: Use
       }
       return current;
     });
-  }, [isActive, isPaused, spawnTarget, config.spawnDelay]);
+  }, [spawnTarget, config.spawnDelay]);
 
   const handleMissClick = useCallback(() => {
-    if (!isActive || isPaused) return;
-  }, [isActive, isPaused]);
+    // Miss clicks don't do anything, just here for future use
+  }, []);
 
   const startTraining = useCallback(() => {
     setIsActive(true);
@@ -83,7 +79,8 @@ export const useClickTrainer = ({ duration, difficulty, onSessionComplete }: Use
     setCPM(0);
     sessionStartTime.current = Date.now();
     pausedTime.current = 0;
-  }, [duration]);
+    setTimeout(() => spawnTarget(), 0);
+  }, [duration, spawnTarget]);
 
   const pauseTraining = useCallback(() => {
     setIsPaused(true);
@@ -104,30 +101,8 @@ export const useClickTrainer = ({ duration, difficulty, onSessionComplete }: Use
     if (timerRef.current) clearInterval(timerRef.current);
     if (cpmTimerRef.current) clearInterval(cpmTimerRef.current);
     if (targetTimeoutRef.current) clearTimeout(targetTimeoutRef.current);
+  }, []);
 
-    const actualDuration = duration - timeRemaining;
-    const totalClicks = score + misses;
-
-    const session: ClickSession = {
-      id: crypto.randomUUID(),
-      timestamp: sessionStartTime.current,
-      duration: actualDuration,
-      totalClicks,
-      successfulClicks: score,
-      missedClicks: misses,
-      accuracy: totalClicks > 0 ? Math.round((score / totalClicks) * 100) : 0,
-      cpm,
-      targetsSeen: totalClicks
-    };
-
-    onSessionComplete(session);
-  }, [score, misses, timeRemaining, duration, cpm, onSessionComplete]);
-
-  useEffect(() => {
-    if (isActive && !isPaused) {
-      spawnTarget();
-    }
-  }, [isActive, isPaused, spawnTarget]);
 
   useEffect(() => {
     if (!isActive || isPaused) return;
@@ -135,7 +110,7 @@ export const useClickTrainer = ({ duration, difficulty, onSessionComplete }: Use
     timerRef.current = setInterval(() => {
       setTimeRemaining(prev => {
         if (prev <= 1) {
-          stopTraining();
+          setIsActive(false);
           return 0;
         }
         return prev - 1;
@@ -145,7 +120,7 @@ export const useClickTrainer = ({ duration, difficulty, onSessionComplete }: Use
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isActive, isPaused, stopTraining]);
+  }, [isActive, isPaused]);
 
   useEffect(() => {
     if (!isActive || isPaused) return;
@@ -173,6 +148,32 @@ export const useClickTrainer = ({ duration, difficulty, onSessionComplete }: Use
     window.addEventListener('blur', handleBlur);
     return () => window.removeEventListener('blur', handleBlur);
   }, [isActive, isPaused, pauseTraining]);
+
+  const wasActive = useRef(false);
+
+  useEffect(() => {
+    if (wasActive.current && !isActive) {
+      const actualDuration = duration - timeRemaining;
+      const totalClicks = score + misses;
+
+      if (totalClicks > 0 || actualDuration > 0) {
+        const session: ClickSession = {
+          id: crypto.randomUUID(),
+          timestamp: sessionStartTime.current,
+          duration: actualDuration,
+          totalClicks,
+          successfulClicks: score,
+          missedClicks: misses,
+          accuracy: totalClicks > 0 ? Math.round((score / totalClicks) * 100) : 0,
+          cpm,
+          targetsSeen: totalClicks
+        };
+
+        onSessionComplete(session);
+      }
+    }
+    wasActive.current = isActive;
+  }, [isActive, score, misses, timeRemaining, duration, cpm, onSessionComplete]);
 
   return {
     isActive,
