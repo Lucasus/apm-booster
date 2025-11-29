@@ -1,0 +1,35 @@
+{
+  "//": "See https://aka.ms/vscode-remote/devcontainer.json for format details.",
+  "name": "node-terraform-azure",
+  "dockerFile": "Dockerfile",
+
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"
+  ],
+
+  "settings": {
+    "editor.formatOnSave": true,
+    "files.eol": "\n",
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "terminal.integrated.profiles.linux": {
+      "zsh": { "path": "/bin/zsh" }
+    }
+  },
+  "forwardPorts": [3000, 5000, 5002],
+
+  "containerEnv": {
+    "TZ": "Europe/Warsaw",
+    "NODE_ENV": "development",
+    "DOCKER_HOST": "unix:///var/run/docker-host.sock"
+  },
+
+  "extensions": [
+    "dbaeumer.vscode-eslint",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "ms-azuretools.vscode-docker",
+    "HashiCorp.terraform"
+  ],
+
+  "postCreateCommand": "node -v && npm -v && terraform -version && az version || true"
+}
