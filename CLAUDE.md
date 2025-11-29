@@ -1,4 +1,4 @@
-# Project: NotiCord (Discord ↔ Notion)
+# Project: APM Booster
 
 # IMPORTANT INSTRUCTIONS TO FOLLOW
 

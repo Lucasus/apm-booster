@@ -43,10 +43,15 @@
       "Read(//dev/**)",
       "Bash(timeout:*)",
       "Bash(for:*)",
-      "Bash(while read file)"
+      "Bash(while read file)",
+      "Bash(node --version)",
+      "Bash(npm --version:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": [],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "dontAsk"
   }
 }
